@@ -3,6 +3,7 @@
 {% load static %}
 {% block body_block %}
 <div id="registration-container" class="content3">
+  <input id="backbuttonstate" type="text" value="0" style="display:none;" />
   <div class="row">
     <div class="col col-12 col-lg-12">
       <form method="POST" action="{% url 'event_registration:register' event %}" class="display-5">
@@ -12,9 +13,13 @@
           <div class="form-group">
             <label for="team_size">Choose the team size: </label>
             <select class="form-control py-2" name="team_size" id="size" onchange="emailField()">
-                <option class="text-muted" value="{{teamsize}}">{{teamsize}}</option>
+              {% if not teamsize %}
+              <option class="text-muted" value="0">Select Team Size</option>
+              {% else %}
+              <option class="text-muted" value="{{teamsize}}">{{teamsize}}</option>
+              {% endif %}
                 {% for i in allowed_team_sizes %}
-                    <option value="{{i}}">{{i}}</option>
+                  <option value="{{i}}">{{i}}</option>
                 {% endfor %}
             </select>
           </div>
@@ -26,9 +31,14 @@
                   <span>{{error|get_key:'notregister'}}</span>
                 </div>
               {% endif %}
+              {% if error|get_key:teamsize %}
+                <div class="alert alert-danger">
+                  <span>{{error|get_key:teamsize}}</span>
+                </div>
+              {% endif %}
               <div class="form-group">
-                <label for="Team name">Team name:</label>
-                <input class="form-control form-control-sm" type="text"  id="teamname" name='team_name' value = "{{teamname}}">
+                <label for="teamname">Team name:</label>
+                <input class="form-control form-control-sm" type="text"  id="teamname" name='team_name' value = "{{teamname}}" required>
                     {% if error|get_key:teamname %}
                       <div class="alert alert-danger">
                         <span>{{error|get_key:teamname}}</span>
@@ -37,7 +47,7 @@
               </div>
               {% for key,value in emailids.items %}
                 <div class="form-group">
-                    <label>Email id of member {{forloop.counter}}</label>
+                    <label for="email{{forloop.counter}}">Email id of member {{forloop.counter}}</label>
                     <input class="form-control form-control-sm" type="email"  id ="email{{forloop.counter}}" name='email{{forloop.counter}}' value = "{{value}}">
                     {% if error|get_key:key %}
                         <div class="alert alert-danger">
@@ -49,8 +59,13 @@
 
               {% if event.event_name == 'Codigo' or  event.event_name == 'Recognizance' %}
                 <div class="form-group">
-                    <label>kaggle id of the team</label>
-                    <input class="form-control form-control-sm" type="text" id="team_id" name='team_id' value = "{{team_id}}">
+                    {% if event.event_name == 'Recognizance'%}
+                    <label for="team_id">Kaggle id of the team</label>
+                    <input class="form-control form-control-sm" type="text"  id="team_id" name='team_id' value = "{{team_id}}" required>
+                  {% else %}
+                   <label for="team_id">HackerRank id of the user</label>
+                  <input class="form-control form-control-sm" type="text" id="team_id" name='team_id' value = "{{team_id}}" required>
+                    {% endif %}
                 </div>
               {% endif %}
               <button type="submit" class="btn-block btn btn-success">Submit</button>
@@ -67,6 +82,21 @@
 
 {% block js %}
      <script>
+       document.addEventListener('DOMContentLoaded', function () {
+          var ibackbutton = document.getElementById("backbuttonstate");
+          setTimeout(function () {
+
+              if (ibackbutton.value == "0") {
+                  // Page has been loaded for the first time - Set marker
+                  ibackbutton.value = "1";
+              } else {
+                  // Back button has been fired.. Do Something different..
+                  emailField();
+              }
+          }, 200);
+          }, false);
+
+        
          function emailField(){
 
             var lst = parseInt(document.getElementById("size").value)
@@ -82,6 +112,7 @@
             var name = document.createElement("input")
             name.setAttribute("class","form-control form-control-sm")
             name.setAttribute("type",'text')
+            name.required = true
             name.setAttribute("name","team_name")
             node.appendChild(lab)
             node.appendChild(name)
@@ -123,7 +154,7 @@
             emails.appendChild(node);
             {% endif %}
             var but = document.createElement("button")
-            but.setAttribute("class","btn btn-success")
+            but.setAttribute("class","btn-block btn btn-success")
             but.setAttribute("value","Submit")
             but.innerHTML = "Submit"
             emails.appendChild(but)

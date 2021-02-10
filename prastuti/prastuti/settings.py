@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from .emailInfo import *
 from django.contrib.messages import constants as messages
+import django_heroku
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,12 +24,13 @@ TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 's0+e9-bacqoj1237)@_u8=*i=ajmk^ffk801o48$q1=spi&8vo'
+SECRET_KEY = 'balasayamamanj1237)@_u8=*gaddopur=ajmk^sdakgjhksfkjshdkjfh$q1=spi&8vo'
+# SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -76,11 +78,11 @@ WSGI_APPLICATION = 'prastuti.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
+#postgresql_psycopg2
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(os.path.join(BASE_DIR, 'db.sqlite3'))
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -138,3 +140,8 @@ EMAIL_PORT = EMAIL_PORT
 MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
+
+
+
+django_heroku.settings(locals())
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

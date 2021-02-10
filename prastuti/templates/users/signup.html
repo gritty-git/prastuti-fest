@@ -30,20 +30,13 @@
                             <div style="color: red;">
                                 {{user_form.year.errors}}
                             </div>
-                            <input class="form-control form-control-sm" placeholder="Enter year of study" type="number" name="year" required="" id="id_year">
+                            <input class="form-control form-control-sm" placeholder="Enter year of study" type="number" name="year" required="" id="id_year" min="1" max="5">
                         </div>
                         <div class="form-group">
                             <input placeholder="Enter password" class="form-control-sm form-control mb-1" type="password" name="password1" autocomplete="new-password" required="" id="id_password1">
 
                             <div style="color: red;">{{user_form.password1.errors}}</div>
-                            <div id="pass-instructions" class="pl-3 text-muted helptext">
-                                <ul>
-                                    <li>Your password can’t be too similar to your other personal information.</li>
-                                    <li>Your password must contain at least 8 characters.</li>
-                                    <li>Your password can’t be a commonly used password.</li>
-                                    <li>Your password can’t be entirely numeric.</li>
-                                </ul>
-                            </div>
+
                         </div>
                         <div class="form-group">
                             <div style="color: red;">{{user_form.password2.errors}}</div>
@@ -54,7 +47,7 @@
                     </fieldset>
                     <button class="btn btn-block btn-info mt-3 mb-3" style="margin-bottom:20px;" type="submit" ,="" value="Signup">Signup</button>
                 </form>
-                <p ><a href="{% url 'users:usersignin' %}" class="mb-5">Already have an account? SignIn Instead</a>
+                <p ><a href="{% url 'users:usersignin' %}" class="mb-5">Already have an account? Sign In Instead</a>
             </div>
         </div>
 

@@ -16,7 +16,7 @@ from events import models as eventModel
 @login_required(login_url="users:usersignin")
 def registerTeam(request, event):
     event = Event.objects.get(event_name=event)
-    # makes sure not more than one team for one event
+    # makes sure not more than 1 team for 1 event
 
     profile = request.user
     if userViews.isRegisteredForEvent(profile, event):
@@ -30,8 +30,6 @@ def registerTeam(request, event):
         emails = {}
         team_name = request.POST['team_name']
         if team_name == "":
-            print("I am in if")
-            # team_name = "no"
             error[team_name] = "Team name can't be empty"
         else:
             try:
@@ -50,21 +48,11 @@ def registerTeam(request, event):
             try:
                 user = CustomUser.objects.get(email=email_id)
             except CustomUser.DoesNotExist:
-                # return HttpResponse(
-                #     "<h2>Enter a Valid Email Id. {} has not registered on this site.</h2>".format(email_id))
                 error[email] = "The user has not registered"
-            # if userViews.isRegisteredForEvent(member_profile, event):
-            #     team_registered = userViews.isRegisteredForEvent(member_profile, event)
-            # return HttpResponse(
-            #     "<h2>{2} has already registered for the event {0} under the team {1}.</h2>".format(event,
-
-            #                                                                                      team_registered,
+        
+        
         self_register = False
-        # try:
-        #     team = Team.objects.get(team_name=team_name)
-        #     error[team.team_name] = "The teamname has already taken"
-        # except Team.DoesNotExist:
-        #     pass
+        cnt = 0
         for i in range(1, team_size + 1):
             email = 'email' + str(i)
             email_id = request.POST[email]
@@ -84,12 +72,16 @@ def registerTeam(request, event):
 
             if member_profile == profile:
                 self_register = True
-            # make sure one registers himself
+            # make sure 1 registers himself
+            cnt += 1
             team_members.append(member_profile)
         member_profile = request.user
         # if there is any error
         if not self_register:
             error['notregister'] = 'You must be in the team'
+        if len(set(team_members)) != cnt:
+            error[team_size] = 'Team members should be distinct'
+
         if len(error) > 0:
             mx_team_sz = event.team_size_mx
             mn_team_sz = event.team_size_mn
@@ -97,7 +89,7 @@ def registerTeam(request, event):
             team_id = 'xyz'
             if event.event_name == 'Codigo' or event.event_name == 'Recognizance':
                 team_id = request.POST['team_id']
-            for i in range(mn_team_sz+1, mx_team_sz + 1):
+            for i in range(mn_team_sz, mx_team_sz + 1):
                 allowed_team_size.append(i)
             return render(request, 'register/registration.html',
                           {'allowed_team_sizes': allowed_team_size, 'event': event, 'error': error,
@@ -113,11 +105,12 @@ def registerTeam(request, event):
             team.team_not_accepted.add(mem)
             team.team_member.add(mem)
         team.team_not_accepted.remove(member_profile)
+        for option_team in member_profile.pending.filter(team_event = team.team_event):
+            option_team.delete()
         if team.team_not_accepted.count() == 0:
             team.team_active = True
         team.save()
         return redirect(request.user.get_absolute_url())
-
     else:
         mx_team_sz = event.team_size_mx
         mn_team_sz = event.team_size_mn
@@ -127,10 +120,10 @@ def registerTeam(request, event):
         # teamsize = 0
         # teamname = ""
         team_id = 'xyz'
-        for i in range(mn_team_sz+1, mx_team_sz + 1):
+        for i in range(mn_team_sz, mx_team_sz + 1):
             allowed_team_size.append(i)
         return render(request, 'register/registration.html',
-                      {'allowed_team_sizes': allowed_team_size, 'event': event, 'teamsize': 1, 'error': error,
+                      {'allowed_team_sizes': allowed_team_size, 'event': event, 'teamsize': 0, 'error': error,
                        'emailids': emails})
 
 

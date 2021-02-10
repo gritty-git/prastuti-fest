@@ -19,11 +19,9 @@ CustomUser = get_user_model()
 # Views start from here
 
 
-def usersList(request):
-    return HttpResponse("Hii! This is user list")
 
 
-@login_required
+@login_required(login_url='users:usersignin')
 def userUpdate(request, pk):
     template = 'users/update.html'
     user = CustomUser.objects.get(pk=pk)
@@ -47,6 +45,8 @@ def userSignin(request):
         if(form.is_valid()):
             user = form.get_user()
             login(request, user)
+            if "next" in request.POST:
+                return redirect(request.POST.get('next'))
             return redirect(user.get_absolute_url())
     else:
         form = AuthenticationForm()
@@ -75,7 +75,7 @@ def userSignup(request):
                 mail_subject, message, to=[to_email]
             )
             email.send()
-            return HttpResponse('Please confirm your email address to complete the registration')
+            return HttpResponse('<h1>Please confirm your email address to complete the registration.Please check your spam folder also.If you did not recieve mail please contact <a href="mailto:prastuti@iitbhu.ac.in">prastuti@iitbhu.ac.in</a></h1>')
     else:
         user_form = forms.UserForm()
     return render(request, 'users/signup.html',
@@ -100,20 +100,29 @@ def activate(request, uidb64, token):
         return HttpResponse('Activation link is invalid!')
 
 
+@login_required(login_url='users:usersignin')
 def userLogout(request):
-    prev = request.META.get('HTTP_REFERER')
     logout(request)
-    return redirect(prev)
+    return redirect('home')
 
 
 @login_required(login_url='users:usersignin')
 def userProfile(request, email):
     user = CustomUser.objects.get(email=email)
+    if request.user != user:
+        return redirect('home')
+    team_cnt = 0
+    inv_cnt = 0
+    for team in user.team_set.all():
+        team_cnt += 1
+        for prof in team.team_not_accepted.all():
+            if prof == user:
+                inv_cnt += 1
     # user.email_user('View CustomUser', "Hii you viewed your profile", EMAIL_HOST_USER)
     update = True
     if user != request.user:
         update = False
-    return render(request, 'users/profile.html', {'profile': user, 'update': update, 'teams': user.team_set.all()})
+    return render(request, 'users/profile.html', {'profile': user, 'update': update, 'teams': user.team_set.all(), 'team_cnt': team_cnt, 'inv_cnt': inv_cnt})
 
 
 def userRecovery(request):
@@ -166,7 +175,7 @@ def userNewpassword(request, uidb64, token):
 
 def isRegisteredForEvent(profile, event):
     for team in profile.team_set.all():
-        if team.team_event == event:
+        if team.team_event == event and not profile in team.team_not_accepted.all():
             return team
     return None
 
@@ -174,7 +183,6 @@ def isRegisteredForEvent(profile, event):
 def eventAcceptance(request, team):
     id = int(team)
     if(request.method == "POST"):
-        print("hello")
         accept = request.POST['accepted']
 
         if(accept == "Yes"):
@@ -182,6 +190,8 @@ def eventAcceptance(request, team):
             custom = CustomUser.objects.get(email=request.user.email)
             team.team_not_accepted.remove(custom)
             team.save()
+            for option_team in custom.pending.filter(team_event=team.team_event):
+                option_team.delete()
             if(team.team_not_accepted.count() == 0):
                 team.team_active = True
                 team.save()
